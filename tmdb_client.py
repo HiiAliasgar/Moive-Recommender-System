@@ -49,7 +49,12 @@ except Exception as e:
 
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "movie_metadata.json")
-TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "8265bd1679663a7ea12ac168da84d2e8")
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
+if not TMDB_API_KEY:
+    logger.warning(
+        "TMDB_API_KEY not set. Movie posters and metadata will be unavailable. "
+        "Get a free key at https://www.themoviedb.org/settings/api"
+    )
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w780"
 
