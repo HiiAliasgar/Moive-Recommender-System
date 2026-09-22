@@ -1,30 +1,27 @@
-# 🎬 CineScope — Movie Recommender System
+# 🎬 CineScope Pro — AI Movie Recommender System
 
-A professional-grade, **offline content-based movie recommender** with a polished, dark-themed Streamlit UI. Discover movies similar to your favourites, explore by genre, or browse curated picks — all powered by pre-computed content similarity.
+A cinema-grade, **offline content-based movie recommender** with a polished, dark-themed Streamlit UI (inspired by Apple TV+ and Letterboxd). Discover movies similar to your favorites, explore by genre blend, browse cinema halls of fame, or roll the movie roulette — with real high-definition posters, ratings, and synopses.
 
-![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.63+-FF4B4B?logo=streamlit&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?logo=streamlit&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
 
 ## ✨ Features
 
-- **🔍 Similar to a movie** — content-based filtering that finds the titles closest to the one you pick (cosine similarity over tag vectors).
-- **🎭 Same favourites** — discover movies that share the same genres as a title you love.
-- **🧭 Browse by genre** — explore popular titles across a genre of your choice.
-- **🌟 Curated picks** — a hand-picked set of well-known crowd favourites.
-- **🎨 Polished UI** — a custom dark theme with gold/orange accents, a responsive card grid, and elegant offline poster placeholders.
-- **⚡ Fast & offline** — all computation happens locally from pre-computed artifacts; no API keys or network required.
+- **🎯 Movie Matcher** — Content-based filtering matching storyline keywords, cast, and atmosphere (using cosine similarity over tag vectors).
+- **🎭 Genre Blend** — Discover movies sharing the exact genre DNA and themes of your favorite film.
+- **🧭 Genre Explorer** — Interactive genre navigation (Sci-Fi, Action, Horror, Drama, Animation, etc.) with title shuffling.
+- **🌟 Cinema Hall of Fame** — Handpicked timeless classics and box-office blockbusters.
+- **🎲 Movie Roulette** — "Surprise Me" reel for spontaneous movie nights.
+- **🖼️ Real High-Definition Posters** — Parallel batch poster retrieval with automatic DNS bypass (resilient against regional ISP DNS blocking) and persistent disk caching.
+- **🎬 Movie Details Modal (`st.dialog`)** — Click any card to pop up official storylines, TMDB ratings (★), release years, runtimes, and a 1-click **"Recommend Movies Like This"** pivot button.
+- **⚡ Self-Healing Architecture** — Automatically generates model artifacts if missing on first launch.
 
 ---
 
 ## 🚀 Quick Start
-
-### Prerequisites
-
-- **Python 3.13+**
-- **[uv](https://docs.astral.sh/uv/)** (recommended) or `pip`
 
 ### 1. Clone the repository
 
@@ -35,97 +32,54 @@ cd Moive-Recommender-System
 
 ### 2. Install dependencies
 
+Using `pip`:
 ```bash
-uv sync
+pip install -r requirements.txt
 ```
+*(or with `uv`: `uv sync`)*
 
-> Without `uv`, create a venv and install manually:
-> ```bash
-> python -m venv .venv
-> . .venv/bin/activate        # Windows: .venv\Scripts\activate
-> pip install numpy pandas scikit-learn streamlit requests
-> ```
-
-### 3. Build the model artifacts
-
-The large similarity matrix is generated locally (it exceeds GitHub's 100 MB file limit, so it is not stored in the repo):
-
-```bash
-python build_model.py
-```
-
-This reads the raw `moive.pkl` source data and writes:
-
-```
-model/
-├── movie_list.pkl      # serialized movie DataFrame (title, tags, movie_id)
-└── similarity.pkl      # cosine-similarity matrix
-```
-
-### 4. Run the app
+### 3. Run the application
 
 ```bash
 streamlit run app.py
 ```
 
+*Note: On first startup, CineScope Pro will automatically generate the cosine similarity matrix if not already present. No manual setup required!*
+
 Your browser will open at `http://localhost:8501`.
 
 ---
 
-## 🖥️ Usage
-
-1. Choose a **recommendation mode** from the sidebar.
-2. Adjust **how many recommendations** you'd like (1–10).
-3. Follow the on-screen prompts:
-   - **Similar to a movie** / **Same favourites**: start typing a title, select it, then click **Show recommendations**.
-   - **Browse by genre**: pick a genre and click **Explore**.
-   - **Curated picks**: recommendations appear immediately.
-
----
-
-## 🏗️ Project Structure
+## 🏗️ Project Architecture
 
 ```
-├── app.py                  # Streamlit web UI (CineScope)
-├── recommender.py          # Core recommendation engine
-├── build_model.py          # Builds model/*.pkl artifacts from raw data
-├── moive.pkl               # Raw source dataset (pickled DataFrame)
-├── model/                  # Generated artifacts (excluded from git)
+├── app.py                  # CineScope Pro Streamlit Web UI
+├── recommender.py          # Core recommendation engine (cosine similarity & self-healing)
+├── tmdb_client.py          # Resilient poster & metadata client (DNS bypass + caching)
+├── build_model.py          # Vectorizer & similarity matrix generator (float32 optimized)
+├── moive.pkl               # TMDB 5000 movie dataset (DataFrame)
+├── cache/                  # Persistent movie poster & metadata cache
+│   └── movie_metadata.json
+├── model/                  # Generated artifacts (auto-built if missing)
 │   ├── movie_list.pkl
 │   └── similarity.pkl
-├── pyproject.toml          # Project metadata + dependencies
-└── uv.lock                 # Locked dependency versions
+└── pyproject.toml          # Project configuration & dependencies
 ```
 
 ---
 
-## 🧠 How It Works
+## 🧠 Recommendation Engine
 
-1. **Feature engineering** — each movie's `tags` (description + keywords) are vectorized with `CountVectorizer` (`build_model.py`).
-2. **Similarity** — a cosine-similarity matrix is computed across all tag vectors and cached as `model/similarity.pkl`.
-3. **Recommendation** — given a seed movie, the engine ranks every other movie by its similarity score or genre overlap (`recommender.py`).
-
-Because everything is pre-computed, lookups are instant and the app runs fully offline.
-
----
-
-## 🛠️ Tech Stack
-
-| Component     | Tool                                   |
-|---------------|----------------------------------------|
-| Language      | Python 3.13                            |
-| UI            | [Streamlit](https://streamlit.io/)     |
-| Data / ML     | pandas, NumPy, scikit-learn            |
-| Web client    | requests (HTTP)                        |
-| Environment   | uv + `pyproject.toml`                  |
+1. **Tag Vectorization**: Movie overviews, genres, cast, and crew keywords are stemmed and vectorized with `CountVectorizer(max_features=5000, stop_words='english')`.
+2. **Cosine Similarity**: Vector angles are computed into an all-pairs similarity matrix, stored as memory-efficient `float32`.
+3. **Multi-Mode Ranking**: Recommends movies by vector proximity, combined genre-weight blending, or curated popularity.
+4. **Smart Fallback**: Supports Wikipedia REST summary API and SVG cinema clapperboard rendering for uninterrupted offline playback.
 
 ---
 
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
-
----
 
 <p align="center">
   <sub>Built with 🎬 by <a href="https://github.com/HiiAliasgar">Aliasgar Lohawala</a></sub>

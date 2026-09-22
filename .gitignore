@@ -22,6 +22,7 @@ env/
 
 # Generated model artifacts (regenerate with `python build_model.py`)
 model/
+cache/
 
 # OS
 .DS_Store

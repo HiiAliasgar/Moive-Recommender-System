@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineScope Pro — Movie Recommender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a12;
+      --bg-card: #0f1626;
+      --bg-card-hover: #162035;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #f59e0b;
+      --accent-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #172033 0%, #070a12 70%);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    .logo-icon { font-size: 2rem; }
+    .logo-text {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .badge {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.6rem;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Search & Quick Picks */
+    .search-box {
+      position: relative;
+      max-width: 640px;
+      margin: 1.8rem auto 1rem auto;
+    }
+    .search-input {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 8px 30px rgba(245, 158, 11, 0.2);
+    }
+    .search-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      z-index: 50;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+      display: none;
+    }
+    .dropdown-item {
+      padding: 0.85rem 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--accent);
+    }
+
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .chip:hover, .chip.active {
+      background: var(--accent);
+      color: #070a12;
+      border-color: var(--accent);
+    }
+
+    /* Seed Banner */
+    .seed-card {
+      display: flex;
+      gap: 1.5rem;
+      background: linear-gradient(135deg, rgba(22, 32, 53, 0.8) 0%, rgba(15, 22, 38, 0.9) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: 20px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
+    }
+    .seed-poster {
+      width: 90px;
+      height: 135px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+    .seed-info { flex: 1; min-width: 0; }
+    .seed-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .seed-meta { color: var(--accent); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.6rem; }
+    .seed-overview { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+
+    /* Movie Grid */
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .grid-title { font-size: 1.4rem; font-weight: 800; }
+    .movie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(245, 158, 11, 0.5);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.6), 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+    .card-poster-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      background: #131c30;
+      overflow: hidden;
+    }
+    .card-poster {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .card:hover .card-poster {
+      transform: scale(1.05);
+    }
+    .card-match-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(16, 185, 129, 0.92);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .card-rating-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #fbbf24;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+    .card-body {
+      padding: 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 0.8rem;
+    }
+    .card-genre {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+    .card-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.45rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .card-btn:hover {
+      background: var(--accent);
+      color: #070a12;
+      border-color: var(--accent);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1.5rem;
+    }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      max-width: 600px;
+      width: 100%;
+      padding: 2rem;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.8);
+    }
+    .modal-close {
+      position: absolute;
+      top: 1.2rem;
+      right: 1.2rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .modal-body {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .modal-poster {
+      width: 130px;
+      height: 195px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+    }
+    .btn-primary {
+      flex: 1;
+      background: var(--accent-gradient);
+      color: #070a12;
+      font-weight: 800;
+      border: none;
+      border-radius: 12px;
+      padding: 0.75rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(245, 158, 11, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header class="header">
+      <a href="/" class="logo">
+        <span class="logo-icon">🎬</span>
+        <span class="logo-text">CineScope Pro</span>
+      </a>
+      <div style="display:flex; align-items:center; gap:0.8rem;">
+        <span class="badge">4,806 Films Indexed</span>
+        <a href="http://localhost:8501" target="_blank" style="color:var(--accent); font-size:0.85rem; text-decoration:none; font-weight:700;">Streamlit Edition ↗</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>Discover Your Next Favorite Film</h1>
+      <p>Content-based AI movie recommendations powered by cosine vector similarity.</p>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search 4,800+ movies (e.g. Inception, Avatar, Titanic)..." autocomplete="off">
+        <div id="searchDropdown" class="search-dropdown"></div>
+      </div>
+
+      <div class="quick-chips">
+        <span style="color:var(--muted); font-size:0.85rem; display:flex; align-items:center;">Try:</span>
+        <button class="chip" onclick="loadMovie('Inception')">Inception</button>
+        <button class="chip" onclick="loadMovie('Interstellar')">Interstellar</button>
+        <button class="chip" onclick="loadMovie('The Dark Knight')">The Dark Knight</button>
+        <button class="chip" onclick="loadMovie('Avatar')">Avatar</button>
+        <button class="chip" onclick="loadMovie('The Matrix')">The Matrix</button>
+        <button class="chip" onclick="loadMovie('Gladiator')">Gladiator</button>
+        <button class="chip" onclick="loadMovie('Pulp Fiction')">Pulp Fiction</button>
+      </div>
+    </section>
+
+    <!-- Seed Banner -->
+    <div id="seedBanner" class="seed-card">
+      <img id="seedPoster" src="" class="seed-poster" alt="Movie Poster">
+      <div class="seed-info">
+        <h2 id="seedTitle" class="seed-title"></h2>
+        <div id="seedMeta" class="seed-meta"></div>
+        <p id="seedOverview" class="seed-overview"></p>
+      </div>
+    </div>
+
+    <!-- Recommendations Grid -->
+    <div class="grid-header">
+      <h3 class="grid-title" id="gridTitle">✨ Top Similar Recommendations</h3>
+      <span id="resultCount" style="color:var(--muted); font-size:0.9rem;"></span>
+    </div>
+
+    <div id="moviesGrid" class="movie-grid">
+      <div style="grid-column: 1 / -1; text-align:center; padding: 3rem;">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detailModal" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-body">
+        <img id="modalPoster" src="" class="modal-poster">
+        <div>
+          <h3 id="modalTitle" style="font-size:1.3rem; font-weight:800; margin-bottom:0.3rem;"></h3>
+          <p id="modalTagline" style="color:var(--accent); font-style:italic; font-size:0.85rem; margin-bottom:0.5rem;"></p>
+          <div id="modalMeta" style="color:var(--muted); font-size:0.85rem; font-weight:600; margin-bottom:0.6rem;"></div>
+          <div id="modalGenres" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:0.85rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Storyline</h4>
+        <p id="modalOverview" style="font-size:0.9rem; line-height:1.5; color:#cbd5e1; max-height:160px; overflow-y:auto;"></p>
+      </div>
+      <div class="modal-actions" style="margin-top:1.5rem;">
+        <button id="modalPivotBtn" class="btn-primary">🎯 Find Movies Like This</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentMovie = "Inception";
+
+    async function loadMovie(title) {
+      currentMovie = title;
+      document.getElementById('searchInput').value = title;
+      document.getElementById('searchDropdown').style.display = 'none';
+
+      // Load details
+      fetch(`/api/details?movie=${encodeURIComponent(title)}`)
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById('seedTitle').textContent = d.title;
+          document.getElementById('seedPoster').src = d.poster_url || 'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg';
+          const meta = [d.release_year, d.vote_average ? `⭐ ${d.vote_average}/10` : '', (d.genres || []).join(' • ')].filter(Boolean);
+          document.getElementById('seedMeta').textContent = meta.join(' | ');
+          document.getElementById('seedOverview').textContent = d.overview || 'No storyline synopsis available.';
+        });
+
+      // Load recommendations
+      document.getElementById('moviesGrid').innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;"><div class="spinner"></div></div>';
+      
+      const res = await fetch(`/api/recommend?movie=${encodeURIComponent(title)}&n=12`);
+      const items = await res.json();
+      renderCards(items);
+    }
+
+    function renderCards(items) {
+      const grid = document.getElementById('moviesGrid');
+      grid.innerHTML = '';
+      document.getElementById('resultCount').textContent = `${items.length} Matches`;
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = () => openModal(item);
+
+        const matchBadge = item.score ? `<div class="card-match-badge">${Math.round(item.score * 100)}% Match</div>` : '';
+        const ratingBadge = item.vote_average ? `<div class="card-rating-badge">★ ${item.vote_average}</div>` : '';
+        const posterUrl = item.poster_url || 'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg';
+        const genres = (item.genres || []).slice(0, 2).map(g => `<span class="card-genre">${g}</span>`).join('');
+
+        card.innerHTML = `
+          <div class="card-poster-wrap">
+            <img src="${posterUrl}" class="card-poster" loading="lazy" alt="${item.title}">
+            ${matchBadge}
+            ${ratingBadge}
+          </div>
+          <div class="card-body">
+            <div>
+              <div class="card-title">${item.title}</div>
+              <div class="card-genres">${genres}</div>
+            </div>
+            <button class="card-btn">View Details</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Search input
+    const input = document.getElementById('searchInput');
+    const dropdown = document.getElementById('searchDropdown');
+
+    let searchTimer = null;
+    input.addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      const q = e.target.value.trim();
+      if (!q) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      searchTimer = setTimeout(async () => {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=6`);
+        const matches = await res.json();
+        if (matches.length === 0) {
+          dropdown.innerHTML = '<div style="padding:1rem; color:var(--muted); font-size:0.9rem;">No titles found.</div>';
+        } else {
+          dropdown.innerHTML = matches.map(m => `
+            <div class="dropdown-item" onclick="loadMovie('${m.title.replace(/'/g, "\\'")}')">
+              <span>${m.title}</span>
+              <span style="font-size:0.75rem; color:var(--accent);">Select →</span>
+            </div>
+          `).join('');
+        }
+        dropdown.style.display = 'block';
+      }, 150);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // Modal
+    function openModal(item) {
+      document.getElementById('modalTitle').textContent = item.title;
+      document.getElementById('modalPoster').src = item.poster_url || '';
+      document.getElementById('modalTagline').textContent = item.tagline ? `"${item.tagline}"` : '';
+      document.getElementById('modalMeta').textContent = [item.release_year, item.vote_average ? `⭐ ${item.vote_average}/10` : '', item.runtime ? `${item.runtime} min` : ''].filter(Boolean).join(' • ');
+      document.getElementById('modalGenres').innerHTML = (item.genres || []).map(g => `<span class="card-genre" style="padding:0.25rem 0.6rem;">${g}</span>`).join('');
+      document.getElementById('modalOverview').textContent = item.overview || 'Storyline synopsis not available.';
+      document.getElementById('modalPivotBtn').onclick = () => {
+        closeModal();
+        loadMovie(item.title);
+      };
+      document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').style.display = 'none';
+    }
+
+    // Initial load
+    loadMovie("Inception");
+  </script>
+</body>
+</html>
