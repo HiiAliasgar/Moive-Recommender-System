@@ -1,86 +1,60 @@
-# 🎬 CineScope Pro — AI Movie Recommender System
+# CineScope Pro — Movie Recommender
 
-A cinema-grade, **offline content-based movie recommender** with a polished, dark-themed Streamlit UI (inspired by Apple TV+ and Letterboxd). Discover movies similar to your favorites, explore by genre blend, browse cinema halls of fame, or roll the movie roulette — with real high-definition posters, ratings, and synopses.
+An offline, content-based movie discovery application built with Streamlit. It uses movie metadata and text features to find titles with similar themes and attributes.
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?logo=streamlit&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-blue)
+> This repository is maintained as an individual project. It is intentionally not part of the curated featured-project selection on the portfolio.
 
----
+## Features
 
-## ✨ Features
+- Content-based movie matching.
+- Genre exploration and genre-weighted discovery.
+- Curated popular and classic movie collections.
+- Movie details including available synopsis, release information and ratings.
+- Poster and metadata retrieval with local caching.
+- Automatic generation of recommendation artifacts when they are missing.
 
-- **🎯 Movie Matcher** — Content-based filtering matching storyline keywords, cast, and atmosphere (using cosine similarity over tag vectors).
-- **🎭 Genre Blend** — Discover movies sharing the exact genre DNA and themes of your favorite film.
-- **🧭 Genre Explorer** — Interactive genre navigation (Sci-Fi, Action, Horror, Drama, Animation, etc.) with title shuffling.
-- **🌟 Cinema Hall of Fame** — Handpicked timeless classics and box-office blockbusters.
-- **🎲 Movie Roulette** — "Surprise Me" reel for spontaneous movie nights.
-- **🖼️ Real High-Definition Posters** — Parallel batch poster retrieval with automatic DNS bypass (resilient against regional ISP DNS blocking) and persistent disk caching.
-- **🎬 Movie Details Modal (`st.dialog`)** — Click any card to pop up official storylines, TMDB ratings (★), release years, runtimes, and a 1-click **"Recommend Movies Like This"** pivot button.
-- **⚡ Self-Healing Architecture** — Automatically generates model artifacts if missing on first launch.
+## Recommendation approach
 
----
+1. Combine available overview, genre, cast and crew keywords into text tags.
+2. Normalize text using the configured preprocessing pipeline.
+3. Vectorize tags with scikit-learn's `CountVectorizer`.
+4. Calculate cosine similarity between movie vectors.
+5. Rank candidate titles by similarity and the selected discovery mode.
 
-## 🚀 Quick Start
+The project stores the similarity matrix using `float32` values to reduce memory use.
 
-### 1. Clone the repository
+## Technology
+
+- Python 3.10+
+- Streamlit
+- pandas
+- scikit-learn
+- TMDB metadata/poster integration
+
+## Run locally
 
 ```bash
 git clone https://github.com/HiiAliasgar/Moive-Recommender-System.git
 cd Moive-Recommender-System
-```
-
-### 2. Install dependencies
-
-Using `pip`:
-```bash
 pip install -r requirements.txt
-```
-*(or with `uv`: `uv sync`)*
-
-### 3. Run the application
-
-```bash
 streamlit run app.py
 ```
 
-*Note: On first startup, CineScope Pro will automatically generate the cosine similarity matrix if not already present. No manual setup required!*
+The first run may generate the vectorizer and similarity artifacts if they are not already present. External poster or metadata requests depend on network availability.
 
-Your browser will open at `http://localhost:8501`.
+## Main files
 
----
-
-## 🏗️ Project Architecture
-
-```
-├── app.py                  # CineScope Pro Streamlit Web UI
-├── recommender.py          # Core recommendation engine (cosine similarity & self-healing)
-├── tmdb_client.py          # Resilient poster & metadata client (DNS bypass + caching)
-├── build_model.py          # Vectorizer & similarity matrix generator (float32 optimized)
-├── moive.pkl               # TMDB 5000 movie dataset (DataFrame)
-├── cache/                  # Persistent movie poster & metadata cache
-│   └── movie_metadata.json
-├── model/                  # Generated artifacts (auto-built if missing)
-│   ├── movie_list.pkl
-│   └── similarity.pkl
-└── pyproject.toml          # Project configuration & dependencies
+```text
+app.py              # Streamlit interface
+recommender.py      # Recommendation logic
+tmdb_client.py      # Poster and metadata client
+build_model.py      # Feature and similarity artifact generation
+moive.pkl           # Movie metadata dataset
+model/              # Generated recommendation artifacts
 ```
 
----
+## Limitations
 
-## 🧠 Recommendation Engine
+Recommendations are based on available metadata and content similarity; they do not represent user-personalized collaborative filtering. Results depend on dataset coverage and metadata quality.
 
-1. **Tag Vectorization**: Movie overviews, genres, cast, and crew keywords are stemmed and vectorized with `CountVectorizer(max_features=5000, stop_words='english')`.
-2. **Cosine Similarity**: Vector angles are computed into an all-pairs similarity matrix, stored as memory-efficient `float32`.
-3. **Multi-Mode Ranking**: Recommends movies by vector proximity, combined genre-weight blending, or curated popularity.
-4. **Smart Fallback**: Supports Wikipedia REST summary API and SVG cinema clapperboard rendering for uninterrupted offline playback.
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-<p align="center">
-  <sub>Built with 🎬 by <a href="https://github.com/HiiAliasgar">Aliasgar Lohawala</a></sub>
-</p>
+[Source code](https://github.com/HiiAliasgar/Moive-Recommender-System)
