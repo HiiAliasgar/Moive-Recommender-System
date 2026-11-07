@@ -2,7 +2,7 @@
 
 An offline, content-based movie discovery application built with Streamlit. It uses movie metadata and text features to find titles with similar themes and attributes.
 
-> This repository is maintained as an individual project. It is intentionally not part of the curated featured-project selection on the portfolio.
+> This repository is an individual project and is currently featured as CineScope in the [portfolio](https://hiialiasgar.github.io/HiiAliasgar/).
 
 ## Features
 
