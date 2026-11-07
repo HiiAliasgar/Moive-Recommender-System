@@ -94,7 +94,7 @@ def fetch_tmdb_details(movie_id):
                 "tmdb_url": f"https://www.themoviedb.org/movie/{movie_id}",
             }
     except Exception as exc:
-        logger.debug("TMDB fetch failed for %s: %s", movie_id, exc)
+        logger.debug("TMDB fetch failed for movie %s (%s)", movie_id, type(exc).__name__)
     return None
 
 
