@@ -16,36 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 
 import requests
-import urllib3
-from urllib3.util import connection
-
-urllib3.disable_warnings()
 logger = logging.getLogger(__name__)
-
-# Fallback AWS IPs for api.themoviedb.org if local ISP DNS poisons the domain
-TMDB_FALLBACK_IPS = [
-    "3.175.86.67",
-    "3.175.86.103",
-    "3.175.86.37",
-    "3.175.86.50",
-]
-
-_ORIG_CREATE_CONNECTION = connection.create_connection
-
-
-def _patched_create_connection(address, *args, **kwargs):
-    host, port = address
-    if host == "api.themoviedb.org":
-        # Route to AWS CloudFront IP to bypass regional ISP DNS blocks
-        return _ORIG_CREATE_CONNECTION((TMDB_FALLBACK_IPS[0], port), *args, **kwargs)
-    return _ORIG_CREATE_CONNECTION(address, *args, **kwargs)
-
-
-# Apply connection patch for requests to api.themoviedb.org
-try:
-    connection.create_connection = _patched_create_connection
-except Exception as e:
-    logger.warning("Could not patch urllib3 connection: %s", e)
 
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "movie_metadata.json")
@@ -87,13 +58,16 @@ def fetch_tmdb_details(movie_id):
     """Fetch movie details and poster path from TMDB API."""
     if not movie_id:
         return None
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&language=en-US"
+    if not TMDB_API_KEY:
+        return None
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}"
+    params = {"api_key": TMDB_API_KEY, "language": "en-US"}
     headers = {
         "User-Agent": "CineScope/2.0 (MovieRecommender)",
         "Host": "api.themoviedb.org",
     }
     try:
-        resp = requests.get(url, headers=headers, timeout=4)
+        resp = requests.get(url, params=params, headers=headers, timeout=4)
         if resp.status_code == 200:
             data = resp.json()
             poster_path = data.get("poster_path")
@@ -120,7 +94,7 @@ def fetch_tmdb_details(movie_id):
                 "tmdb_url": f"https://www.themoviedb.org/movie/{movie_id}",
             }
     except Exception as exc:
-        logger.debug("TMDB fetch failed for %s: %s", movie_id, exc)
+        logger.debug("TMDB fetch failed for movie %s (%s)", movie_id, type(exc).__name__)
     return None
 
 

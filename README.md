@@ -37,6 +37,7 @@ The project stores the similarity matrix using `float32` values to reduce memory
 git clone https://github.com/HiiAliasgar/Moive-Recommender-System.git
 cd Moive-Recommender-System
 pip install -r requirements.txt
+python -m pytest -q  # run unit tests first
 streamlit run app.py
 ```
 
@@ -52,6 +53,10 @@ build_model.py      # Feature and similarity artifact generation
 moive.pkl           # Movie metadata dataset
 model/              # Generated recommendation artifacts
 ```
+
+## Tests
+
+Run the recommendation-engine unit tests with `python -m pytest -q`. The tests use a small synthetic dataset and do not need the full movie metadata file or TMDB credentials.
 
 ## Limitations
 

@@ -2,7 +2,7 @@
 
 Features:
 - Responsive, dark-themed cinematic UI (Apple TV+ / Letterboxd inspired)
-- Multi-threaded TMDB poster & metadata engine with DNS bypass and disk caching
+- Concurrent TMDB poster and metadata retrieval with local caching
 - Interactive movie cards with match-score badges, ratings, and genre tags
 - Rich Movie Details dialog (st.dialog) with synopsis, runtime, and "Find Similar" pivot
 - Multi-mode discovery: Movie Matcher, Genre Blend, Genre Explorer, Hall of Fame, and Movie Roulette
@@ -10,14 +10,12 @@ Features:
 
 import html
 import random
-import warnings
 
 import streamlit as st
 
 from recommender import get_engine
 from tmdb_client import fetch_movies_batch, get_movie_details
 
-warnings.filterwarnings("ignore")
 
 # ---------------------------------------------------------------------------
 # Page configuration
