@@ -83,19 +83,43 @@ class Recommender:
     """Encapsulates all recommendation strategies and metadata helpers."""
 
     def __init__(self, movies, similarity):
-        self.movies = movies
-        self.similarity = similarity
-        self.titles = movies["title"].tolist()
-        self._title_lower_map = {t.lower(): t for t in self.titles}
-        self._title_to_idx = {t: i for i, t in enumerate(self.titles)}
-        self._genre_cache = {}
+        required_columns = {"title", "tags", "movie_id"}
+        if not hasattr(movies, "columns") or not required_columns.issubset(movies.columns):
+            raise ValueError("Movie dataset must contain title, tags and movie_id columns.")
+        if len(movies) == 0:
+            raise ValueError("Movie dataset is empty.")
+        if getattr(similarity, "shape", None) != (len(movies), len(movies)):
+            raise ValueError("Similarity matrix dimensions do not match the movie dataset.")
 
-        # Pre-extract genres for all movies for fast filtering
-        self._movie_genres = [
-            extract_genres(tags) for tags in movies["tags"].fillna("")
-        ]
+        self.movies = movies.reset_index(drop=True)
+        self.similarity = similarity
+        self.titles = self.movies["title"].fillna("").astype(str).tolist()
+        self._movie_tags = self.movies["tags"].fillna("").astype(str).tolist()
+        self._title_lower_map = {t.lower(): t for t in self.titles if t}
+        self._title_to_idx = {t: i for i, t in enumerate(self.titles) if t}
+        self._genre_cache = {}
+        self._movie_genres = [extract_genres(tags) for tags in self._movie_tags]
+
+    @staticmethod
+    def _validate_limit(n):
+        if isinstance(n, bool) or not isinstance(n, int) or n < 0:
+            raise ValueError("Result limit must be a non-negative integer.")
+        return n
+
+    def _resolve_title(self, title):
+        if not isinstance(title, str):
+            return None
+        if title in self._title_to_idx:
+            return title
+        return self._title_lower_map.get(title.strip().lower())
 
     # ----- metadata helpers -----
+    def tags_of(self, title):
+        """Return the source tags for a movie, or an empty string when unknown."""
+        clean_title = self._resolve_title(title)
+        idx = self._title_to_idx.get(clean_title) if clean_title else None
+        return self._movie_tags[idx] if idx is not None else ""
+
     def genres_of(self, title):
         if title not in self._genre_cache:
             idx = self._title_to_idx.get(title)
@@ -113,6 +137,9 @@ class Recommender:
 
     def search(self, query, limit=20):
         """Case/space-insensitive title search prioritizing prefix matches."""
+        self._validate_limit(limit)
+        if not isinstance(query, str):
+            return []
         q = query.strip().lower()
         if not q:
             return []
@@ -132,14 +159,13 @@ class Recommender:
     # ----- strategies -----
     def by_similarity(self, movie, n=5):
         """Content-based similar movies using cosine similarity over tag vectors."""
-        idx = self._title_to_idx.get(movie)
+        self._validate_limit(n)
+        if n == 0:
+            return []
+        clean = self._resolve_title(movie)
+        idx = self._title_to_idx.get(clean) if clean else None
         if idx is None:
-            # Fallback to case-insensitive match
-            clean = self._title_lower_map.get(movie.lower())
-            if clean:
-                idx = self._title_to_idx.get(clean)
-            else:
-                return []
+            return []
 
         sim_scores = self.similarity[idx]
         scored = sorted(
@@ -167,6 +193,11 @@ class Recommender:
 
     def by_genre(self, genre, n=10):
         """Recommend popular titles matching the chosen genre."""
+        self._validate_limit(n)
+        if n == 0:
+            return []
+        if not isinstance(genre, str) or not genre.strip():
+            return []
         matched_indices = [
             i for i, g_list in enumerate(self._movie_genres)
             if genre.lower() in [g.lower() for g in g_list]
@@ -190,16 +221,22 @@ class Recommender:
 
     def by_genre_similar(self, movie, n=10):
         """Movies sharing the most genres and content with the selected movie."""
-        genres = set(self.genres_of(movie))
+        self._validate_limit(n)
+        if n == 0:
+            return []
+        clean = self._resolve_title(movie)
+        if clean is None:
+            return []
+        genres = set(self.genres_of(clean))
         if not genres:
             return self.by_similarity(movie, n)
 
-        target_idx = self._title_to_idx.get(movie)
+        target_idx = self._title_to_idx.get(clean)
         sim_scores = self.similarity[target_idx] if target_idx is not None else None
 
         candidates = []
         for i, title in enumerate(self.titles):
-            if title == movie:
+            if title == clean:
                 continue
             overlap = len(genres & set(self._movie_genres[i]))
             if overlap > 0:
@@ -223,6 +260,9 @@ class Recommender:
 
     def curated(self, n=10):
         """A handpicked hall of fame of critically acclaimed and blockbuster films."""
+        self._validate_limit(n)
+        if n == 0:
+            return []
         hall_of_fame = [
             "Inception", "Interstellar", "The Dark Knight", "Avatar",
             "The Matrix", "Pulp Fiction", "Fight Club", "Forrest Gump",
@@ -250,6 +290,9 @@ class Recommender:
 
     def random_discovery(self, n=10):
         """Random discovery / movie roulette."""
+        self._validate_limit(n)
+        if n == 0:
+            return []
         indices = random.sample(range(len(self.titles)), min(n, len(self.titles)))
         return [
             {
